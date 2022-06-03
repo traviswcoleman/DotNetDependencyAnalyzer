@@ -7,6 +7,8 @@ All of the logic is in the DotNetDependencyAnalyzer.dll which can be added to yo
 ---
 ## Running
 
+![Pipeline status](https://github.com/traviswcoleman/DotNetDependencyAnalyzer/actions/workflows/Pipeline.yml/badge.svg)
+
 The Console project is meant to be run as a command line tool
 
 **Command-line**\
