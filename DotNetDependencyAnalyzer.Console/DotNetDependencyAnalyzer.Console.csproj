@@ -8,6 +8,7 @@
     <StartupObject>DotNetDependencyAnalyzer.Program</StartupObject>
     <AssemblyName>$(MSBuildProjectName.Replace(".Console", ""))</AssemblyName>
     <RootNamespace>$(MSBuildProjectName.Replace(".Console", "").Replace(" ", "_"))</RootNamespace>
+	  <LangVersion>latestMajor</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
