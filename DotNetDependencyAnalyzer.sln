@@ -5,13 +5,13 @@ VisualStudioVersion = 17.2.32516.85
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetDependencyAnalyzer.Console", "DotNetDependencyAnalyzer.Console\DotNetDependencyAnalyzer.Console.csproj", "{3F64DB99-DE3F-4451-8155-40B120266BE8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetDependencyAnalyzer.Analyzer", "DotNetDependencyAnalyzer.Analyzer\DotNetDependencyAnalyzer.Analyzer.csproj", "{4DD3A3D0-459E-4B84-91C6-A40078C24B7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetDependencyAnalyzer.Analyzer", "DotNetDependencyAnalyzer.Analyzer\DotNetDependencyAnalyzer.Analyzer.csproj", "{4DD3A3D0-459E-4B84-91C6-A40078C24B7D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C3BA9364-57DE-45F7-A1F3-FA679361819C}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
-		Pipeline.yml = Pipeline.yml
 		README.md = README.md
+		.github\workflows\Pipeline.yml = .github\workflows\Pipeline.yml
 	EndProjectSection
 EndProject
 Global
