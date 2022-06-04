@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "DotNetDependencyAnalyzer.Console": {
-        "commandName": "Project",
-        "commandLineArgs": "D:\\git\\DotNetDependencyAnalyzer\\DotNetDependencyAnalyzer.sln"
-    }
-  }
-}

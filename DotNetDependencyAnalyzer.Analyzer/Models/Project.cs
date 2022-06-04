@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace DotNetDependencyAnalyzer.Analyzer.Models
 {
@@ -11,6 +12,6 @@ namespace DotNetDependencyAnalyzer.Analyzer.Models
 		}
 
 		public string Name { get; set; }
-		public IList<Framework> TargetFrameworks { get; set; }
+		public IList<Framework>? TargetFrameworks { get; set; }
 	}
 }

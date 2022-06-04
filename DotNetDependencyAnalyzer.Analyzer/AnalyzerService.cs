@@ -1,13 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 using DotNetDependencyAnalyzer.Analyzer.Models;
-
-using Microsoft.Extensions.Logging;
 
 using NuGet.Common;
 using NuGet.ProjectModel;
@@ -16,6 +16,8 @@ namespace DotNetDependencyAnalyzer.Analyzer
 {
 	public class AnalyzerService : IAnalyzerService
 	{
+		private HashSet<string> distinctDependencies = new();
+
 		public AnalyzerResult AnalyzeProject(AnalyzerOptions options)
 		{
 			if (!DIConfig.Configured)
@@ -35,7 +37,23 @@ namespace DotNetDependencyAnalyzer.Analyzer
 				throw new InvalidOperationException($"Unable to process {options.PathToFile}.\n\nHere is the build output: {status.StdOutputText}\n\nHere is the error output: {status.ErrorStreamText}");
 			}
 
-			return ProcessGraph(graph, options);
+			var result = ProcessGraph(graph, options);
+
+			if (!String.IsNullOrWhiteSpace(options.OutputPath))
+				WriteGraph(result, options.OutputPath);
+
+			return result;
+		}
+
+		private static void WriteGraph(AnalyzerResult graph, string outputPath)
+		{
+			using StreamWriter writer = new(outputPath, false, Encoding.UTF8);
+			writer.WriteLine(JsonSerializer.Serialize(graph, new JsonSerializerOptions
+			{
+				DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault,
+				WriteIndented = true,
+			}));
+			writer.Flush();
 		}
 
 		private AnalyzerResult ProcessGraph(DependencyGraphSpec graph, AnalyzerOptions options)
@@ -44,39 +62,95 @@ namespace DotNetDependencyAnalyzer.Analyzer
 
 			foreach (var project in graph.Projects.Where(p => p.RestoreMetadata.ProjectStyle == ProjectStyle.PackageReference))
 			{
-				Project outputProject = new(Path.GetFileName(project.FilePath));
-
-				var lockFile = GetLockFile(project.FilePath, project.RestoreMetadata.OutputPath);
-
-				foreach(var targetFramework in project.TargetFrameworks)
-				{
-					var lockFileTargetFramework = lockFile.Targets.FirstOrDefault(t => t.TargetFramework.Equals(targetFramework.FrameworkName));
-
-
-					if (lockFileTargetFramework == null) continue;
-
-					Framework outputFramework = new(lockFileTargetFramework.Name);
-
-					foreach(var dependency in targetFramework.Dependencies)
-					{
-						var library = lockFileTargetFramework.Libraries.FirstOrDefault(library => library.Name == dependency.Name);
-						Dependency outputDependency = new(library.Name, library.Version.Version);
-
-						GetChildDependencies(lockFileTargetFramework, library, outputDependency);
-
-						outputFramework.Dependencies.Add(outputDependency);
-					}
-
-					outputProject.TargetFrameworks.Add(outputFramework);
-				}
-
-				result.Projects.Add(outputProject);
+				ProcessGraphProject(options, result, project);
 			}
+
+			if (!result.Projects.Any())
+				result.Projects = null;
+
+			if (distinctDependencies.Any())
+				result.AllDependencies = distinctDependencies;
 
 			return result;
 		}
 
-		private static void GetChildDependencies(LockFileTarget lockFileTargetFramework, LockFileTargetLibrary library, Dependency outputDependency)
+		private void ProcessGraphProject(AnalyzerOptions options, AnalyzerResult result, PackageSpec project)
+		{
+			Project outputProject = new(Path.GetFileName(project.FilePath));
+
+			var lockFile = GetLockFile(project.FilePath, project.RestoreMetadata.OutputPath);
+
+			foreach (var targetFramework in project.TargetFrameworks)
+			{
+				ProcessProjectFramework(options, outputProject, lockFile, targetFramework);
+			}
+
+			if (!outputProject.TargetFrameworks.Any())
+				outputProject.TargetFrameworks = null;
+
+			if (!String.IsNullOrWhiteSpace(options.SearchString) &&
+				outputProject.TargetFrameworks == null &&
+				!outputProject.Name.Contains(options.SearchString, StringComparison.InvariantCultureIgnoreCase))
+			{
+				return;
+			}
+			else
+			{
+				result.Projects!.Add(outputProject);
+				distinctDependencies.Add(outputProject.Name);
+			}
+		}
+
+		private void ProcessProjectFramework(AnalyzerOptions options, Project outputProject, LockFile lockFile, TargetFrameworkInformation targetFramework)
+		{
+			var lockFileTargetFramework = lockFile.Targets.FirstOrDefault(t => t.TargetFramework.Equals(targetFramework.FrameworkName));
+
+
+			if (lockFileTargetFramework == null) return;
+
+			Framework outputFramework = new(lockFileTargetFramework.Name);
+
+			foreach (var dependency in targetFramework.Dependencies)
+			{
+				ProcessFrameworkDependency(options, lockFileTargetFramework, outputFramework, dependency);
+			}
+			if (!outputFramework.Dependencies.Any())
+				outputFramework.Dependencies = null;
+			if (!String.IsNullOrWhiteSpace(options.SearchString) &&
+				outputFramework.Dependencies == null &&
+				!outputFramework.Name.Contains(options.SearchString, StringComparison.InvariantCultureIgnoreCase))
+			{
+				return;
+			}
+			else
+			{
+				outputProject.TargetFrameworks!.Add(outputFramework);
+				distinctDependencies.Add(outputFramework.Name);
+			}
+		}
+
+		private void ProcessFrameworkDependency(AnalyzerOptions options, LockFileTarget lockFileTargetFramework, Framework outputFramework, NuGet.LibraryModel.LibraryDependency dependency)
+		{
+			var library = lockFileTargetFramework.Libraries.FirstOrDefault(library => library.Name == dependency.Name);
+			Dependency outputDependency = new(library.Name, library.Version.Version);
+
+			ProcessChildDependencies(options.SearchString, lockFileTargetFramework, library, outputDependency);
+			if (!outputDependency.ChildDependencies.Any())
+				outputDependency.ChildDependencies = null;
+			if (!String.IsNullOrWhiteSpace(options.SearchString) &&
+				outputDependency.ChildDependencies == null &&
+				!outputDependency.Name.Contains(options.SearchString, StringComparison.InvariantCultureIgnoreCase))
+			{
+				return;
+			}
+			else
+			{
+				outputFramework.Dependencies!.Add(outputDependency);
+				distinctDependencies.Add($"{outputDependency.Name} {outputDependency.Version}");
+			}
+		}
+
+		private void ProcessChildDependencies(string? SearchString, LockFileTarget lockFileTargetFramework, LockFileTargetLibrary library, Dependency outputDependency)
 		{
 			if (library?.Dependencies?.Any() ?? false)
 			{
@@ -84,13 +158,25 @@ namespace DotNetDependencyAnalyzer.Analyzer
 				{
 					var childLibrary = lockFileTargetFramework.Libraries.FirstOrDefault(library => library.Name == dependency.Id);
 					var childDependency = new Dependency(childLibrary.Name, childLibrary.Version.Version);
-					GetChildDependencies(lockFileTargetFramework, childLibrary, childDependency);
-					outputDependency.ChildDependencies.Add(childDependency);
+					ProcessChildDependencies(SearchString, lockFileTargetFramework, childLibrary, childDependency);
+					if (!childDependency.ChildDependencies.Any())
+						childDependency.ChildDependencies = null;
+					if (!String.IsNullOrWhiteSpace(SearchString) &&
+						childDependency.ChildDependencies == null &&
+						!childDependency.Name.Contains(SearchString, StringComparison.InvariantCultureIgnoreCase))
+					{
+						continue; //Does not have any children, does not match search string, don't include in the graph
+					}
+					else //No search, or has included children, or matches the search string
+					{
+						outputDependency.ChildDependencies!.Add(childDependency);
+						distinctDependencies.Add($"{childDependency.Name} {childDependency.Version}");
+					}
 				}
 			}
 		}
 
-		private LockFile GetLockFile(string filePath, string outputPath)
+		private static LockFile GetLockFile(string filePath, string outputPath)
 		{
 			var status = RunDotNet(filePath, outputPath, DotNetCommand.restore);
 
@@ -101,7 +187,7 @@ namespace DotNetDependencyAnalyzer.Analyzer
 			return LockFileUtilities.GetLockFile(lockFilePath, NullLogger.Instance);
 		}
 
-		private DotnetStatus RunDotNet(string pathToFile, string outputFile, DotNetCommand command)
+		private static DotnetStatus RunDotNet(string pathToFile, string outputFile, DotNetCommand command)
 		{
 			var startInfo = new ProcessStartInfo("dotnet")
 			{
@@ -145,7 +231,7 @@ namespace DotNetDependencyAnalyzer.Analyzer
 			}
 		}
 
-		private async Task HandleTextStream(StreamReader reader, StringBuilder stringBuilder)
+		private static async Task HandleTextStream(StreamReader reader, StringBuilder stringBuilder)
 		{
 			await Task.Yield();
 

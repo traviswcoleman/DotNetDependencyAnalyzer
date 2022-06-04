@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace DotNetDependencyAnalyzer.Analyzer.Models
 {
@@ -14,6 +15,6 @@ namespace DotNetDependencyAnalyzer.Analyzer.Models
 
 		public string Name { get; set; }
 		public Version Version { get; set; }
-		public IList<Dependency> ChildDependencies { get; set; }
+		public IList<Dependency>? ChildDependencies { get; set; }
 	}
 }

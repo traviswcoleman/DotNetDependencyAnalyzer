@@ -12,8 +12,8 @@ All of the logic is in the DotNetDependencyAnalyzer.dll which can be added to yo
 The Console project is meant to be run as a command line tool
 
 **Command-line**\
-.\DotNetDependencyAnalyzer.exe <PathToSolution>\<SolutionName>.sln [-s|search \<path>] [-o|output \<path>]\
-.\DotNetDependencyAnalyzer.exe <PathToSolution>\<PathToProject>\<ProjectName>.csproj [-s|search \<path>] [-o|output \<path>]
+.\DotNetDependencyAnalyzer.exe <PathToSolution>\<SolutionName>.sln [-s \<path>] [-o \<path>]\
+.\DotNetDependencyAnalyzer.exe <PathToSolution>\<PathToProject>\<ProjectName>.csproj [-s \<path>] [-o \<path>]
 
 **Optional parameters:**\
 -s|search \<dependency>: Searches for the specific dependency\
