@@ -1,4 +1,6 @@
-﻿using DotNetDependencyAnalyzer.Analyzer;
+﻿using System.Reflection;
+
+using DotNetDependencyAnalyzer.Analyzer;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,10 +32,12 @@ namespace DotNetDependencyAnalyzer
 		{
 			var configurationBuilder = new ConfigurationBuilder();
 			configurationBuilder
-				.SetBasePath(Directory.GetCurrentDirectory())
+				.SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
 				.AddJsonFile("appsettings.json", false, true)
 #if DEBUG
 				.AddJsonFile("appsettings.development.json", true, true);
+#else
+; //End the first appsettings method when in release
 #endif
 			return ConfigureServices(configurationBuilder.Build());
 		}
