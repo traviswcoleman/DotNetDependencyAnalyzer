@@ -132,6 +132,8 @@ namespace DotNetDependencyAnalyzer.Analyzer
 		private void ProcessFrameworkDependency(AnalyzerOptions options, LockFileTarget lockFileTargetFramework, Framework outputFramework, NuGet.LibraryModel.LibraryDependency dependency)
 		{
 			var library = lockFileTargetFramework.Libraries.FirstOrDefault(library => library.Name == dependency.Name);
+			if (library == null)
+				return;
 			Dependency outputDependency = new(library.Name, library.Version.Version);
 
 			ProcessChildDependencies(options.SearchString, lockFileTargetFramework, library, outputDependency);
@@ -157,6 +159,8 @@ namespace DotNetDependencyAnalyzer.Analyzer
 				foreach (var dependency in library.Dependencies)
 				{
 					var childLibrary = lockFileTargetFramework.Libraries.FirstOrDefault(library => library.Name == dependency.Id);
+					if (childLibrary == null)
+						return;
 					var childDependency = new Dependency(childLibrary.Name, childLibrary.Version.Version);
 					ProcessChildDependencies(SearchString, lockFileTargetFramework, childLibrary, childDependency);
 					if (!childDependency.ChildDependencies.Any())
