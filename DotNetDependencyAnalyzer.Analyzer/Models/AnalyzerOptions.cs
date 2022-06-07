@@ -11,11 +11,14 @@ namespace DotNetDependencyAnalyzer.Analyzer.Models
 		public string? OutputPath { get; private set; }
 		public string? SearchString { get; private set; }
 
-		public AnalyzerOptions(string pathToFile, string? outputPath = null, string? searchString = null)
+		public string? PathToTemp { get; private set; }
+
+		public AnalyzerOptions(string pathToFile, string? outputPath = null, string? searchString = null, string? pathToTemp = null)
 		{
 			PathToFile = pathToFile ?? throw new ArgumentNullException(nameof(pathToFile));
 			OutputPath = outputPath;
 			SearchString = searchString;
+			PathToTemp = pathToTemp;
 		}
 	}
 }

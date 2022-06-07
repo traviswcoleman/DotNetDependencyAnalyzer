@@ -12,7 +12,7 @@ namespace DotNetDependencyAnalyzer.Analyzer.Models
 		}
 
 		public string RootPath { get; private set; }
-		public IList<Project>? Projects { get; set; }
+		public IList<Project> Projects { get; set; }
 		public HashSet<string>? AllDependencies { get; set; }
 	}
 }

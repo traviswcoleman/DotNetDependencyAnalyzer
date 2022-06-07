@@ -71,6 +71,17 @@ namespace DotNetDependencyAnalyzer
 		{
 			writer.Write(last ? "└" : "├");
 			writer.WriteLine($"─{project.Name}");
+			if (project.LibraryList != null)
+			{
+				var list = project.LibraryList.ToList();
+				for (int i = 0; i < list.Count; i++)
+				{
+					writer.Write(last ? "  " : "│ ");
+					writer.Write("│ ");
+					writer.Write(i == project.LibraryList.Count - 1 ? "└" : "├");
+					writer.WriteLine($"─{list[i]}");
+				}
+			}
 			if (project.TargetFrameworks != null)
 				for (int i = 0; i < project.TargetFrameworks.Count; i++)
 					PrintFramework(writer, project.TargetFrameworks[i], last ? "  " : "│ ", i == project.TargetFrameworks.Count - 1);
@@ -109,7 +120,7 @@ namespace DotNetDependencyAnalyzer
 				throw new InvalidDataException();
 			}
 
-			return new AnalyzerOptions(results.Value.FilePath, results.Value.OutputPath, results.Value.SearchString);
+			return new AnalyzerOptions(results.Value.FilePath, results.Value.OutputPath, results.Value.SearchString, results.Value.PathToTemp);
 		}
 	}
 }

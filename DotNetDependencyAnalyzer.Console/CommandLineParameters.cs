@@ -19,5 +19,8 @@ namespace DotNetDependencyAnalyzer
 
 		[Option('o', Required =false, HelpText ="Specify an output file to write with the results")]
 		public string? OutputPath { get; set; }
+
+		[Option('t', Required = false, HelpText = "Specify path for temp file")]
+		public string? PathToTemp { get; set; }
 	}
 }
